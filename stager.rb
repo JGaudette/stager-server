@@ -9,6 +9,8 @@ require './request_handlers/github_request_handler'
 require './authentication_strategy'
 require './container_rotation_strategy'
 require './routing_strategy'
+require './githubapi'
+require './docker_container'
 
 class Stager < Sinatra::Base
 
@@ -182,7 +184,20 @@ class Stager < Sinatra::Base
   end 
 
   get '/' do
-    '<a target="_blank" href="http://www.funnyordie.com/videos/3ffc646c01/oh-hello-show-introduction-from-nick-kroll">Oh, hello</a>'
+    @branches = get_branches
+    @containers = Hash.new
+    containers = ::Docker::Container.all(all: true)
+
+    containers.each do |c|
+      @containers
+      a = DockerContainer.new
+      a.container_name = c.json['Config']['Env'][3].split('=')[1]
+      a.running = c.json['State']['Running']
+      a.start_date = DateTime.strptime(c.json['State']['StartedAt'], '%Y-%m-%dT%H:%M:%S')
+      @containers[a.container_name] = a
+    end
+
+    erb :index
   end
 
   post '/launch' do

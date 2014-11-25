@@ -1,0 +1,117 @@
+<div class='page-header'>
+  <h3>Available Branches</h3>
+</div>
+<div class='row'>
+  <div class='col-sm-6'>
+    <% @branches.keys.each do |br| %>
+      <li class='list-group-item'>
+        <span id="launch-<%=@branches[br]%>" data-sha="<%= br %>">
+
+          <!-- RUNNING CONTAINER -->
+          <% if not @containers[@branches[br]].nil? %>
+            <a data-image="corista-portal" data-container_name="<%=@branches[br]%>" class='btn btn-xs btn-danger kill'>Kill</a>
+            <a href="<%= "http://#{@branches[br]}.stager.corista.local/stager.txt"%>" class="btn btn-info btn-xs" target="_blank">Log</a>
+            <span id="launch-<%=@branches[br]%>-branch">
+              <a href="<%= "http://#{@branches[br]}.stager.corista.local" %>"><%= br %></a>
+            </span>
+
+
+          <% else %>
+            <a data-image="corista-portal" data-container_name="<%=@branches[br]%>" class='btn btn-xs btn-primary launch'>Launch</a>
+            <span id="launch-<%=@branches[br]%>-branch"><%= br %></span>
+          <% end %>
+
+
+        </span>
+      </li>
+    <% end %>
+  </div>
+<!--
+  <div class='col-sm-6'>
+    <% @containers.keys.each do |c| %>
+      <li class='list-group-item'>
+        <%= c %>
+        <%= @containers[c].start_date %>
+      </li>
+    <% end %>
+  </div>
+-->
+</div>
+
+<script type='text/javascript'>
+
+function initLaunch(){
+  $(".launch").each(function(index){
+    $(this).unbind('click');
+    $(this).click(function(){
+      var image = this.attributes['data-image'].value;
+      var container_name = this.attributes['data-container_name'].value;
+
+      console.log("clicked: " + container_name);
+      console.log("sending: " + "image_name=" + image + "&container_name=" + container_name);
+
+      $.ajax({
+        type: "POST",
+        url: "/launch",
+        async: true,
+        data: "image_name=" + image + "&container_name=" + container_name,
+        success: function(data){
+          var branch = $("#launch-" + container_name + "-branch")[0].innerText;
+          $("#launch-" + container_name).html(
+            "<a data-image='corista-portal' data-container_name="+container_name+" class='btn btn-xs btn-danger kill'>Kill</a> " + 
+            "<a href='"+data+"/stager.txt' class='btn btn-info btn-xs' target='_blank'>Log</a> " +
+            "<span id='launch-"+container_name+"-branch'> <a href='" + data + "' target='_blank'>" + branch + "</a></span>"
+          );
+        },
+        error: function(data){
+          console.log("error: " + data);
+          $("#launch-" + container_name).html( "ERROR: " + data );
+        },
+        xhrFields: {
+          withCredentials: true
+        }
+      });
+    });
+  });
+}
+
+function initKill(){
+  $(".kill").each(function(index){
+    $(this).unbind('click');
+    $(this).click(function(){
+      var image = this.attributes['data-image'].value;
+      var container_name = this.attributes['data-container_name'].value;
+
+      console.log("clicked: " + container_name);
+      console.log("sending: " + "image_name=" + image + "&container_name=" + container_name);
+
+      $.ajax({
+        type: "POST",
+        url: "/kill",
+        async: true,
+        data: "image_name=" + image + "&container_name=" + container_name,
+        success: function(data){
+          var branch = $("#launch-" + container_name + "-branch")[0].innerText;
+          $("#launch-" + container_name).html( "<a class='btn btn-primary btn-xs launch'>Launch</a> " + branch);
+        },
+        error: function(data){
+          console.log("error: " + data);
+          $("#launch-" + container_name).html( "ERROR: " + data );
+        },
+        xhrFields: {
+          withCredentials: true
+        }
+      });
+    });
+  });
+}
+
+$(document).ready(function(){
+  initLaunch();
+  initKill();
+
+  setInterval(initLaunch, 2000);
+  setInterval(initKill, 2000);
+});
+
+</script>

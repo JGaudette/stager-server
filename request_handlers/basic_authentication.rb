@@ -20,6 +20,8 @@ class BasicAuthentication < AuthenticationStrategy
   end
 
   def authenticates?
+    return true if @request.xhr?
+
     auth = Rack::Auth::Basic::Request.new(@request.env)
     return false unless auth.provided? and auth.basic? and auth.credentials
     user, pass = auth.credentials
